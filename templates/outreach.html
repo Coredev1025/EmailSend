@@ -12,18 +12,22 @@
           <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e6e8ec;">
             <tr>
               <td style="padding:28px 28px 8px;font-size:15px;line-height:1.55;">
-                <p style="margin:0 0 16px;">Hi {{name}},</p>
+                <p style="margin:0 0 16px;">Hi {{first_name}},</p>
                 <p style="margin:0 0 16px;">
-                  I’m reaching out from {{company}} about {{topic}}.
-                  If this is useful, reply to this email and I’ll share a short next step.
+                  I noticed your role as {{job_title}} at {{company_name}} and wanted to share a short note
+                  about {{topic}}.
+                </p>
+                <p style="margin:0 0 16px;">
+                  If this is relevant, reply to this email and I’ll send a brief next step.
+                  If not, you can ignore this message or unsubscribe below.
                 </p>
                 <p style="margin:0 0 16px;">
                   Thanks,<br />
                   {{sender_name}}<br />
-                  <span style="color:#555;">{{company}}</span>
+                  <span style="color:#555;">{{sender_company}}</span>
                 </p>
                 <p style="margin:24px 0 0;font-size:12px;line-height:1.4;color:#777;">
-                  You’re receiving this because you {{consent_reason}}.
+                  {{sender_company}} ·
                   <a href="{{unsubscribe_url}}" style="color:#555;">Unsubscribe</a>
                 </p>
               </td>

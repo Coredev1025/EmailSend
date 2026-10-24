@@ -23,6 +23,7 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "csv-parse": "^7.0.3",
     "dotenv": "^16.4.7"
   }
 }

@@ -46,14 +46,27 @@ cp .env.example .env
 npm install
 ```
 
-Put leads in `data/leads.csv` (see `data/leads.sample.csv`):
+### CSV formats
+
+**Simple** (`data/leads.sample.csv`):
 
 ```csv
 email,name,company,topic,sender_name,consent_reason,unsubscribe_url
 alex@example.com,Alex,Acme,inventory alerts,Sam,requested a demo,https://example.com/unsub?e=alex@example.com
 ```
 
-Edit `templates/outreach.html` — placeholders use `{{column_name}}`.
+**LeadSays export** (e.g. `data/leadsays-united-states.csv` — keep local; gitignored):
+
+- Reads `Emails` (comma-separated), prefers a **work** address over Gmail/Yahoo/etc. when both exist
+- Maps `First Name` → `{{first_name}}`, `Company Name` → `{{company_name}}`, `Job title` → `{{job_title}}`
+- Dedupes by email; skips rows with no valid address
+
+```bash
+npm run dry-run -- --csv data/leadsays-united-states.csv --limit 5 --preview 2
+npm run send -- --csv data/leadsays-united-states.csv --limit 300 --offset 0
+```
+
+Edit `templates/outreach.html` — placeholders use `{{column_name}}`. Set `TOPIC`, `SENDER_COMPANY`, and `UNSUBSCRIBE_URL_BASE` in `.env`.
 
 ## Run
 

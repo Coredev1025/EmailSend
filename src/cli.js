@@ -16,18 +16,19 @@ Usage:
   npm run send -- --csv data/leads.csv
 
 Options:
-  --csv <path>         CSV with email,name,... columns (required)
+  --csv <path>         CSV path (simple email column or LeadSays Emails export)
   --template <path>    HTML template (default: templates/outreach.html)
-  --subject <text>     Subject; supports {{name}} etc. (default from env SUBJECT)
+  --subject <text>     Subject; supports {{first_name}} etc. (default from env SUBJECT)
   --provider <name>    brevo | resend (default: PROVIDER or brevo)
   --limit <n>          Max recipients this run (default: all)
   --offset <n>         Skip first N rows (for multi-day free-tier batches)
+  --preview <n>        With --dry-run, print N rendered subjects/bodies
   --dry-run            Render + log only; do not call the API
   --help               Show this help
 
 Env (see .env.example):
   PROVIDER, BREVO_API_KEY, RESEND_API_KEY, FROM_EMAIL, FROM_NAME, SUBJECT
-  DELAY_MS, DAILY_CAP
+  TOPIC, UNSUBSCRIBE_URL_BASE, DELAY_MS, DAILY_CAP
 `;
 
 async function main() {
@@ -39,6 +40,7 @@ async function main() {
       provider: { type: "string" },
       limit: { type: "string" },
       offset: { type: "string" },
+      preview: { type: "string" },
       "dry-run": { type: "boolean", default: false },
       help: { type: "boolean", default: false },
     },
@@ -57,13 +59,18 @@ async function main() {
 
   const dryRun = values["dry-run"];
   const providerName = (values.provider || process.env.PROVIDER || "brevo").toLowerCase();
-  const subjectTpl = values.subject || process.env.SUBJECT || "Quick note for {{name}}";
+  const subjectTpl =
+    values.subject || process.env.SUBJECT || "Quick note for {{first_name}} at {{company_name}}";
   const fromEmail = process.env.FROM_EMAIL;
   const fromName = process.env.FROM_NAME || "Your Company";
+  const senderCompany = process.env.SENDER_COMPANY || fromName;
+  const topic = process.env.TOPIC || "a product that may help your team";
+  const unsubBase = process.env.UNSUBSCRIBE_URL_BASE || "https://example.com/unsubscribe";
   const delayMs = Number(process.env.DELAY_MS || 1200);
   const dailyCap = Number(process.env.DAILY_CAP || (providerName === "resend" ? 100 : 300));
   const offset = Number(values.offset || 0);
   const limit = values.limit != null ? Number(values.limit) : undefined;
+  const previewN = values.preview != null ? Number(values.preview) : dryRun ? 2 : 0;
 
   if (!dryRun && !fromEmail) {
     console.error("Set FROM_EMAIL in .env (must be on your verified custom domain).");
@@ -119,17 +126,44 @@ async function main() {
     ),
   );
 
+  const buildVars = (lead) => ({
+    ...lead,
+    email: lead.email,
+    name: lead.name || lead.first_name || "there",
+    first_name: lead.first_name || lead.name || "there",
+    company_name: lead.company_name || lead.company || "your company",
+    job_title: lead.job_title || "your role",
+    topic: lead.topic || topic,
+    sender_name: lead.sender_name || fromName,
+    sender_company: lead.sender_company || senderCompany,
+    unsubscribe_url:
+      lead.unsubscribe_url ||
+      `${unsubBase}${unsubBase.includes("?") ? "&" : "?"}e=${encodeURIComponent(lead.email)}`,
+  });
+
+  if (previewN > 0) {
+    for (const lead of leads.slice(0, previewN)) {
+      const vars = buildVars(lead);
+      const subject = renderTemplate(subjectTpl, vars);
+      const html = renderTemplate(htmlTpl, vars);
+      console.log("--- preview ---");
+      console.log("to:", lead.email);
+      console.log("subject:", subject);
+      console.log(htmlToText(html));
+    }
+  }
+
   const result = await sendBatch({
     leads,
     delayMs: dryRun ? 0 : delayMs,
     sendOne: async (lead) => {
-      const vars = { ...lead, email: lead.email, name: lead.name || "there" };
+      const vars = buildVars(lead);
       const html = renderTemplate(htmlTpl, vars);
       const subject = renderTemplate(subjectTpl, vars);
       const text = htmlToText(html);
       return provider.send({
         to: lead.email,
-        toName: lead.name,
+        toName: lead.name || lead.first_name,
         fromEmail,
         fromName,
         subject,

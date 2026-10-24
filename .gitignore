@@ -1,6 +1,8 @@
 node_modules/
 .env
 data/leads.csv
+data/leadsays*.csv
+data/*.prepared.csv
 *.log
 .DS_Store
 dist/
