@@ -1,0 +1,3 @@
+email,name,company,topic,sender_name,consent_reason,unsubscribe_url
+alex@example.com,Alex,Acme Tools,inventory alerts,Sam Rivera,requested a demo on our site,https://example.com/unsubscribe?e=alex@example.com
+jordan@example.org,Jordan,Northwind,onboarding tips,Sam Rivera,signed up for our newsletter,https://example.com/unsubscribe?e=jordan@example.org
